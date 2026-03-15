@@ -9,7 +9,137 @@
 # [blue][bg:#fc0000]Some [/]text[/]
 
 import chroma
+import std/strutils
 
 let c = "ff0000"
 let g = parseHex(c)
-echo g.toHtmlRgb()
+let gb = g.toHtmlRgb()
+
+let s = "[blue][bg:red]Some [/]text[/]"
+# \e[0;34;41mSome
+
+type NotImplementedError = object of CatchableError
+
+type
+  TokenType* = enum
+    tkOpen, tkClose, tkText
+
+  Token* = object
+    kind: TokenType
+    data: string
+
+proc parse(s: string): seq[Token] =
+  var eof: bool = false
+  var curPos: int = 0
+  var curChar: char = s[curPos]
+  var curS: string = ""
+
+  proc advance(n: int = 1) =
+    curPos += n
+    if curPos >= s.len:
+      eof = true
+      return
+    curChar = s[curPos]
+  
+  var tokens: seq[Token]
+  
+  proc readText() =
+    if curS.len > 0:
+      tokens.add(Token(kind:TokenType.tkText, data:curS))
+      curS = ""
+
+  proc parseOpenStyle() =
+    advance()
+    var eot: bool = false
+    while not eot:
+      if curChar == ']':
+        advance()
+        eot = true
+      else:
+        curS = curS & curChar
+        advance()
+    tokens.add(Token(kind:TokenType.tkOpen, data:curS))
+
+  proc parseCloseStyle() =
+    advance(2)
+    var eot: bool = false
+    while not eot:
+      if curChar == ']':
+        advance()
+        eot = true
+      else:
+        curS = curS & curChar
+        advance()
+    tokens.add(Token(kind:TokenType.tkClose, data:curS))
+
+  proc parseOpenTag() =
+    # First save cur string
+    if curPos-1 > -1 and s[curPos - 1] == '/':
+      raise newException(NotImplementedError, "Style escape not implemented yet.")
+    if curPos + 1 < s.len and s[curPos + 1] == '/':
+      parseCloseStyle()
+    else:
+      parseOpenStyle()
+    curS = ""
+
+  while not eof:
+    if curChar == '[':
+      readText()
+      parseOpenTag()
+    else:
+      # Assume text
+      curS = curS & curChar
+      advance()
+  return tokens
+
+proc fgNameAnsiId(clr: string): int =
+  var clrId: int = 0
+  case clr:
+  of "blue":
+    clrId = 34
+  of "red":
+    clrId = 31
+  else:
+    discard
+  return clrId
+
+proc bgNameAnsiId(clr: string): int =
+  var clrId: int = 0
+  case clr:
+  of "blue":
+    clrId = 44
+  of "red":
+    clrId = 41
+  else:
+    discard
+  return clrId
+
+proc buildStack(stack: seq[string]): string =
+  var bg: int = 0
+  var fg: int = 0
+  for s in stack:
+    if "bg" in s:
+      let ss = s.split(":")
+      bg = bgNameAnsiId(ss[1])
+    if "fg" in s:
+      let ss = s.split(":")
+      fg = fgNameAnsiId(ss[1])
+    else:
+      fg = bgNameAnsiId(s)
+  return "\e[0;" & $fg & ";" & $bg & "m"
+
+let tokens = parse(s)
+echo tokens
+var stack: seq[string] = @[]
+
+for tok in tokens:
+  case tok.kind
+  of tkOpen:
+    stack.add(tok.data)
+  of tkClose:
+    if stack.len > 0:
+      discard stack.pop()
+  of tkText:
+    stdout.write buildStack(stack)
+    stdout.write tok.data
+    stdout.write "\e[0m"
