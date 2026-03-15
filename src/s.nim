@@ -15,7 +15,7 @@ let c = "ff0000"
 let g = parseHex(c)
 let gb = g.toHtmlRgb()
 
-let s = "[blue][bg:red]Some [/]text[/]"
+let s = "[blue][bg:red]Some text[/] Hello"
 # \e[0;34;41mSome
 
 type NotImplementedError = object of CatchableError
@@ -94,14 +94,26 @@ proc parse(s: string): seq[Token] =
 
 proc fgNameAnsiId(clr: string): int =
   case clr
-  of "blue": 34
+  of "black": 30
   of "red": 31
+  of "green": 32
+  of "yellow": 33
+  of "blue": 34
+  of "purple": 35
+  of "cyan": 36
+  of "white": 37
   else: 39
 
 proc bgNameAnsiId(clr: string): int =
   case clr
-  of "blue": 44
+  of "black": 40
   of "red": 41
+  of "green": 42
+  of "yellow": 43
+  of "blue": 44
+  of "purple": 45
+  of "cyan": 46
+  of "white": 47
   else: 49
 
 proc buildStack(stack: seq[string]): string =
