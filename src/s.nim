@@ -93,40 +93,30 @@ proc parse(s: string): seq[Token] =
   return tokens
 
 proc fgNameAnsiId(clr: string): int =
-  var clrId: int = 0
-  case clr:
-  of "blue":
-    clrId = 34
-  of "red":
-    clrId = 31
-  else:
-    discard
-  return clrId
+  case clr
+  of "blue": 34
+  of "red": 31
+  else: 39
 
 proc bgNameAnsiId(clr: string): int =
-  var clrId: int = 0
-  case clr:
-  of "blue":
-    clrId = 44
-  of "red":
-    clrId = 41
-  else:
-    discard
-  return clrId
+  case clr
+  of "blue": 44
+  of "red": 41
+  else: 49
 
 proc buildStack(stack: seq[string]): string =
-  var bg: int = 0
-  var fg: int = 0
+  var bg = 49
+  var fg = 39
+
   for s in stack:
-    if "bg" in s:
-      let ss = s.split(":")
-      bg = bgNameAnsiId(ss[1])
-    if "fg" in s:
-      let ss = s.split(":")
-      fg = fgNameAnsiId(ss[1])
+    if s.startsWith("bg:"):
+      bg = bgNameAnsiId(s.split(":")[1])
+    elif s.startsWith("fg:"):
+      fg = fgNameAnsiId(s.split(":")[1])
     else:
-      fg = bgNameAnsiId(s)
-  return "\e[0;" & $fg & ";" & $bg & "m"
+      fg = fgNameAnsiId(s)
+
+  return "\e[" & $fg & ";" & $bg & "m"
 
 let tokens = parse(s)
 echo tokens
