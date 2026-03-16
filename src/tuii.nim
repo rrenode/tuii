@@ -1,3 +1,19 @@
+##
+##
+## ENV's to Support (based on Python's Typer):
+## `TERM` - "dumb" or "unknown" will disable color/style and some 
+##    features that require moving the cursor, such as progress bars.
+## 
+## `FORCE_COLOR` - if set and non-empty,
+##    then color/styles will be enabled regardless of the value of TERM.
+## 
+## `NO_COLOR` - if set, disables all color in the output. NO_COLOR takes 
+##    precedence over FORCE_COLOR.
+## 
+## `COLUMNS` - overrides auto-detection of visible width
+## 
+## `LINES` - overrides auto-detection of visible height
+
 import std/[os, strutils, terminal]
 
 type
