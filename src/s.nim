@@ -1,3 +1,8 @@
+## Me messing with colors and parsing the lib's future markup lang...
+## 
+## || TODOS ||
+## TODO: Validate style syntax
+
 # [red]Some text[/red]
 # \e[1;91m
 
@@ -5,17 +10,25 @@
 # [#fc0000]Some text[/]
 # [bg:#fc0000]Some text[/]
 
-
 # [blue][bg:#fc0000]Some [/]text[/]
 
+# [/] <-- stack pop
+
+# Style
+#   foreground color: TermColor
+#   background color: TermColor
+#   sgrAttributes attr: SGRattr
+# 
+
+
 import chroma
-import std/strutils
+import std/[strutils, terminal]
 
 let c = "ff0000"
 let g = parseHex(c)
 let gb = g.toHtmlRgb()
 
-let s = "[blue][bg:red]Some text[/] Hello"
+let s = "[blue][bg:red]Some text[/] He[/]llo"
 # \e[0;34;41mSome
 
 type NotImplementedError = object of CatchableError
@@ -68,7 +81,7 @@ proc parse(s: string): seq[Token] =
         advance()
         eot = true
       else:
-        curS = curS & curChar
+        curS &= curChar
         advance()
     tokens.add(Token(kind:TokenType.tkClose, data:curS))
 
@@ -90,6 +103,7 @@ proc parse(s: string): seq[Token] =
       # Assume text
       curS = curS & curChar
       advance()
+  readText()
   return tokens
 
 proc fgNameAnsiId(clr: string): int =
