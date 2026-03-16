@@ -1,6 +1,4 @@
-import std/terminal
-import tables
-import std/[os, strutils]
+import std/[os, strutils, terminal]
 
 type
   ColorLevel = enum
@@ -8,7 +6,7 @@ type
     clAnsi256
     clTrueColor
 
-  Color8Enum* = enum
+  Color8* = enum
     black
     red
     green
@@ -18,7 +16,7 @@ type
     cyan
     white
   
-  Color16Enum* = enum
+  ColorBright* = enum
     brightBlack
     brightRed
     bightGreen
@@ -33,7 +31,56 @@ type
     g: int
     b: int
 
+proc fgId(clr: Color8): int =
+  case clr
+  of Color8.black: 30
+  of Color8.red: 31
+  of Color8.green: 32
+  of Color8.yellow: 33
+  of Color8.blue: 34
+  of Color8.magenta: 35
+  of Color8.cyan: 36
+  of Color8.white: 37
+  else: 39
+
+proc bgId(clr: Color8): int =
+  case clr
+  of Color8.black: 40
+  of Color8.red: 41
+  of Color8.green: 42
+  of Color8.yellow: 43
+  of Color8.blue: 44
+  of Color8.magenta: 45
+  of Color8.cyan: 46
+  of Color8.white: 47
+  else: 49
+
+proc fgId(clr: ColorBright): int =
+  case clr
+  of ColorBright.black: 90
+  of ColorBright.red: 91
+  of ColorBright.green: 92
+  of ColorBright.yellow: 93
+  of ColorBright.blue: 94
+  of ColorBright.magenta: 95
+  of ColorBright.cyan: 96
+  of ColorBright.white: 97
+  else: 99
+
+proc bgId(clr: ColorBright): int =
+  case clr
+  of ColorBright.black: 100
+  of ColorBright.red: 101
+  of ColorBright.green: 102
+  of ColorBright.yellow: 103
+  of ColorBright.blue: 104
+  of ColorBright.magenta: 105
+  of ColorBright.cyan: 106
+  of ColorBright.white: 107
+  else: 109
+
 proc detectColorLevel(): ColorLevel =
+  ## std/terminal doesn't play nice with Windows
   let colorterm = getEnv("COLORTERM", "").toLowerAscii
   let term = getEnv("TERM", "").toLowerAscii
 
@@ -61,25 +108,31 @@ proc rgbToAnsi(r, g, b: int): string =
 # \e[49m - reset background
 # \e[0m  - reset everything
 
-# Set     Reset
-# \e[1m   \e[22m  bold
-# \e[2m   \e[22m  dim/faint
-# \e[3m   \e[23m  italic
-# \e[4m   \e[24m  underline
-# \e[5m   \e[25m  blinking
-# \e[7m   \e[27m  inverse/reverse
-# \e[8m   \e[28m  hidden/invisible
-# \e[9m   \e[29m  strikethrough
+#[
+┌─────┬───────┬──────────────────┐
+│ Set │ Reset │      Style       │
+├─────┼───────┼──────────────────┤
+│   1 │    22 │ bold             │
+│   2 │    22 │ dim/faint        │
+│   3 │    23 │ italic           │
+│   4 │    24 │ underline        │
+│   5 │    25 │ blinking         │
+│   7 │    27 │ inverse/reverse  │
+│   8 │    28 │ hidden/invisible │
+│   9 │    29 │ strikethrough    │
+└─────┴───────┴──────────────────┘
+]#
 
 # Styles are simple too:
 # \e[{style_1};{style_2};...{style_n}m
 
 # 8-16 colors
-# \e[{style};{foreground};{background}m
+# \e[{style};{foreground};{background}m <-- technically order of these doesn't matter
 
 # 256 Colors
-# \e[38;5;{ID}m   FOREGROUND
-# \e[48;5;{ID}m   BACKGROUND
+# The omly order that matters is 256 and truecolor.
+# \e[38;5;{ID}m   FOREGROUND (note the prefix of 38;5)
+# \e[48;5;{ID}m   BACKGROUND (note the prefix of 48;5)
 #
 # 0-7 are standard colors
 # 8-15 are high-intensity colors
@@ -87,8 +140,8 @@ proc rgbToAnsi(r, g, b: int): string =
 # 232-255 are grayscale from darker to lighter
 
 # TRUECOLOR
-# \e[38;2;{r};{g};{b}m    FOREGROUND
-# \e[48;2;{r};{g};{b}m    BACKGROUND
+# \e[38;2;{r};{g};{b}m    FOREGROUND (note the prefix of 38;2)
+# \e[48;2;{r};{g};{b}m    BACKGROUND (note the prefix of 48;2)
 
 when isMainModule:
   echo rgbToAnsi(255, 120, 9)
