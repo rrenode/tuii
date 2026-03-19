@@ -1,4 +1,13 @@
 ##
+## This problem domain is vast and in many areas unstandardized.
+##  
+##  We have to consider:
+##    \|-> User's Color Capacity - with envs that are at least partly standardized
+##    \|-> Term's Color Capacity - 
+##              which is not standardized and has several pieces:
+##                - term emulator (config/internal)
+##                - native term (system level APIs; some use envs)
+##    \|-> Term's default colors
 ##
 ## ENV's to Support (based on Python's Typer):
 ## `TERM` - "dumb" or "unknown" will disable color/style and some 
@@ -81,7 +90,7 @@ proc fgId(clr: ColorBright): int =
   of ColorBright.magenta: 95
   of ColorBright.cyan: 96
   of ColorBright.white: 97
-  else: 99
+  else: 39
 
 proc bgId(clr: ColorBright): int =
   case clr
@@ -93,7 +102,7 @@ proc bgId(clr: ColorBright): int =
   of ColorBright.magenta: 105
   of ColorBright.cyan: 106
   of ColorBright.white: 107
-  else: 109
+  else: 49
 
 proc detectColorLevel(): ColorLevel =
   ## std/terminal doesn't play nice with Windows
